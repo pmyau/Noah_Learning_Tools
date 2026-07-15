@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>幼兒數字數數看</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f7f9fc;
+            height: 100vh;
+            /* 修正 iPhone 底部工具列遮擋問題 */
+            height: 100dvh; 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        /* 控制面板 */
+        #control-panel {
+            background-color: #ffffff;
+            padding: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            z-index: 10;
+            flex-shrink: 0; /* 防止面板被壓縮 */
+        }
+
+        label {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        input[type="number"] {
+            font-size: 1.1rem;
+            padding: 6px 10px;
+            width: 70px;
+            border: 3px solid #cbd5e1;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+            color: #1e293b;
+            outline: none;
+            -webkit-appearance: none; /* 移除 iOS 預設內陰影 */
+        }
+
+        select {
+            font-size: 1.1rem;
+            padding: 6px 10px;
+            border: 3px solid #cbd5e1;
+            border-radius: 12px;
+            background-color: white;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        button {
+            font-size: 1.1rem;
+            padding: 8px 16px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #dd5252;
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #dd5252;
+        }
+
+        /* 遊戲舞台 */
+        #game-stage {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* 醒目的背景大數字 */
+        #big-number {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-size: 8rem;
+            font-weight: 900;
+            color: rgba(59, 130, 246, 0.18);
+            line-height: 1;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 物品網格容器 */
+        #items-grid {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            gap: 8px;
+            justify-content: center;
+            align-content: center;
+            z-index: 2;
+        }
+
+        /* 物品樣式 */
+        .item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .item.clicked {
+            animation: rubberBand 0.5s forwards;
+        }
+
+        /* 點擊後的數字標籤 */
+        .count-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background-color: #4ad66d;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .item.clicked .count-badge {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes rubberBand {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.2, 0.8); }
+            50% { transform: scale(0.8, 1.2); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="control-panel">
+        <label for="num-input">數字：</label>
+        <input type="number" id="num-input" min="1" max="100" value="48">
+        
+        <select id="type-select">
+            <option value="🚗">汽車 🚗</option>
+            <option value="⚽">球球 ⚽</option>
+            <option value="🐶">狗狗 🐶</option>
+            <option value="🐱">貓咪 🐱</option>
+            <option value="🍎">蘋果 🍎</option>
+            <option value="🦖">恐龍 🦖</option>
+        </select>
+
+        <button id="start-btn">變出來！</button>
+    </div>
+
+    <div id="game-stage">
+        <div id="big-number">48</div>
+        <div id="items-grid"></div>
+    </div>
+
+    <script>
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playPopSound() {
+            if (!audioCtx) return;
+            try {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(350, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.08);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            } catch(e) {
+                console.log(e);
+            }
+        }
+
+        function generateItems() {
+            initAudio();
+
+            const input = document.getElementById('num-input');
+            let count = parseInt(input.value);
+            
+            if (isNaN(count) || count < 1) count = 1;
+            if (count > 100) {
+                count = 100;
+                input.value = 100;
+            }
+
+            const emoji = document.getElementById('type-select').value;
+            const grid = document.getElementById('items-grid');
+            const bigNumber = document.getElementById('big-number');
+            
+            bigNumber.innerText = count;
+            grid.innerHTML = '';
+
+            // 修正 iPhone 核心：使用 getBoundingClientRect() 精準取得當前畫面的像素寬高
+            const rect = grid.getBoundingClientRect();
+            const stageWidth = rect.width || window.innerWidth;
+            const stageHeight = rect.height || (window.innerHeight - 80); // 扣掉控制列概估值
+            
+            let bestCols = 1;
+            let bestRows = count;
+            let maxScore = 0;
+
+            // 計算網格排版
+            for (let cols = 1; cols <= count; cols++) {
+                let rows = Math.ceil(count / cols);
+                let cellSizeX = stageWidth / cols;
+                let cellSizeY = stageHeight / rows;
+                let size = Math.min(cellSizeX, cellSizeY);
+                
+                if (size > maxScore) {
+                    maxScore = size;
+                    bestCols = cols;
+                    bestRows = rows;
+                }
+            }
+
+            grid.style.gridTemplateColumns = `repeat(${bestCols}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${bestRows}, 1fr)`;
+
+            // 計算縮放字體大小（預留安全間距以免塞不下）
+            const finalFontSize = maxScore * 0.7;
+            let clickCounter = 0;
+
+            for (let i = 1; i <= count; i++) {
+                const item = document.createElement('div');
+                item.className = 'item';
+                item.style.width = '100%';
+                item.style.height = '100%';
+                item.style.fontSize = `${finalFontSize}px`;
+                item.innerText = emoji;
+                item.style.animationDelay = `${Math.min(i * 0.008, 0.3)}s`;
+
+                const badge = document.createElement('div');
+                badge.className = 'count-badge';
+                // 根據格子大小動態調整氣泡字體，避免在大格子裡字太小
+                badge.style.fontSize = `${Math.max(12, finalFontSize * 0.25)}px`;
+                item.appendChild(badge);
+
+                const handlePointerDown = (e) => {
+                    e.preventDefault();
+                    if (!item.classList.contains('clicked')) {
+                        clickCounter++;
+                        item.classList.add('clicked');
+                        badge.innerText = clickCounter;
+                        playPopSound();
+                    }
+                };
+
+                // iPhone 專用的 Touch 事件
+                item.addEventListener('touchstart', handlePointerDown, { passive: false });
+                item.addEventListener('mousedown', handlePointerDown);
+
+                grid.appendChild(item);
+            }
+        }
+
+        // 綁定事件
+        document.getElementById('start-btn').addEventListener('click', generateItems);
+
+        // 修正 iPhone 初始載入可能抓不到高度的問題，延遲 100 毫秒執行
+        window.addEventListener('load', () => {
+            setTimeout(generateItems, 100);
+        });
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(generateItems, 150);
+        });
+    </script>
+</body>
+</html>
