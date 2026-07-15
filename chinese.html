@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中文認字遊戲 (廣東話)</title>
+    <title>中文認字遊戲 (廣東話 - Pexels 官方高清修正版)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -49,68 +49,95 @@
             font-weight: bold;
             color: #1e293b;
         }
+        
+        /* 左右雙卡容器 */
         #flashcard-area {
             flex: 1;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 15px;
+            padding: 20px;
+            gap: 24px;
+            width: 100%;
+            max-width: 950px;
+            margin: 0 auto;
         }
-        #card {
+
+        /* 兩張卡片的通用基礎樣式 */
+        .game-card {
             background: white;
-            width: 90%;
-            max-width: 320px;
-            height: 55%;
-            max-height: 400px;
+            flex: 1;
+            height: 60%;
+            max-height: 450px;
             border-radius: 32px;
             box-shadow: 0 15px 30px rgba(0,0,0,0.08);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-around;
+            justify-content: center;
             padding: 20px;
-            border: 6px solid #ffd43b;
+            position: relative;
+            overflow: hidden; /* 防止圖片超出圓角卡片 */
             animation: cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
         }
-        #emoji-pic {
-            font-size: 7.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
+
+        /* 左邊圖片卡：黃色粗邊框，並將內邊距設為0讓圖片填滿 */
+        #image-card {
+            border: 6px solid #ffd43b;
+            padding: 0; 
+            background-color: #f1f3f5; /* 載入前顯示灰色背景 */
         }
+
+        /* 右邊文字卡：橙色粗邊框 */
+        #text-card {
+            border: 6px solid #ff922b;
+        }
+
+        /* 真實圖片樣式：填滿整張左卡，並保持比例 */
+        #real-pic {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 裁剪並填滿 */
+            border-radius: 22px; /* 配合卡片的圓角 */
+            transition: opacity 0.3s ease;
+            opacity: 0; /* 圖片載入完成前先隱藏，避免閃爍 */
+        }
+
+        /* 文字卡內容：大大的標楷體 */
         #word-text {
-            font-size: 2.8rem;
+            font-family: "標楷體", "BiauKai", "DFKai-SB", "Microsoft JhengHei", sans-serif;
+            font-size: 4.5rem;
             font-weight: 900;
             color: #2c3e50;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             text-align: center;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            width: 100%;
+            word-break: break-all;
         }
+
+        /* 發聲按鈕 */
         #speak-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
             background-color: #ff922b;
             border: none;
-            width: 65px;
-            height: 65px;
+            width: 55px;
+            height: 55px;
             border-radius: 50%;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             color: white;
             cursor: pointer;
-            box-shadow: 0 5px 0 #d9480f;
+            box-shadow: 0 4px 0 #d9480f;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         #speak-btn:active {
-            transform: translateY(3px);
+            transform: translateY(2px);
             box-shadow: 0 2px 0 #d9480f;
         }
+
         /* 進階自訂輸入區 */
         #custom-panel {
             background-color: #fff;
@@ -145,7 +172,7 @@
             outline: none;
             color: #2c3e50;
             font-weight: bold;
-            -webkit-user-select: text; /* 確保 iOS 可以點擊輸入文字 */
+            -webkit-user-select: text;
             user-select: text;
         }
         input[type="text"]:focus {
@@ -190,6 +217,25 @@
             0% { transform: scale(0.8); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
+
+        /* 窄螢幕 RWD 自適應 */
+        @media (max-width: 600px) {
+            #flashcard-area {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .game-card {
+                width: 100%;
+                height: 40%;
+                padding: 15px;
+            }
+            #image-card {
+                padding: 0;
+            }
+            #word-text {
+                font-size: 3rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -203,9 +249,15 @@
         </select>
     </div>
 
+    <!-- 左右雙卡：左邊顯示真實照片，右邊顯示大字 -->
     <div id="flashcard-area">
-        <div id="card">
-            <div id="emoji-pic">🦁</div>
+        <!-- 左卡：純真實相片 -->
+        <div id="image-card" class="game-card">
+            <img id="real-pic" src="" alt="真實相片">
+        </div>
+
+        <!-- 右卡：純文字 -->
+        <div id="text-card" class="game-card">
             <div id="word-text">獅子</div>
             <button id="speak-btn">🔊</button>
         </div>
@@ -216,41 +268,45 @@
         <button id="next-btn" class="nav-btn" onclick="nextCard()">下一個 ▶</button>
     </div>
 
-    <!-- 新增：進階自訂生成區 -->
+    <!-- 進階自訂生成區 -->
     <div id="custom-panel">
-        <div class="custom-title">🪄 魔法變卡機 (可按鍵盤語音說出詞語)：</div>
+        <div class="custom-title">🪄 魔法變卡機 (可輸入任何中文字，會自動搜尋真實相片！)：</div>
         <div class="input-row">
-            <input type="text" id="custom-input" placeholder="例如：西瓜、飛機、直升機..." maxlength="8">
+            <input type="text" id="custom-input" placeholder="例如：巴士、西瓜、恐龍..." maxlength="8">
             <button class="magic-btn" onclick="generateCustomCard()">變！</button>
         </div>
     </div>
 
     <script>
+        // Pexels API 金鑰
+        const PEXELS_API_KEY = "pzMoBCE8OR6nBcm0MfRs5QySojQ5Q6foGmduaVWvExJp5MLS0JhCqMmB";
+
+        // 資料庫：改為使用穩定、乾淨、適合兒童的圖片庫關鍵字
         const database = {
             animals: [
-                { word: "獅子", emoji: "🦁" }, { word: "大象", emoji: "🐘" }, { word: "長頸鹿", emoji: "🦒" },
-                { word: "小狗", emoji: "🐶" }, { word: "小貓", emoji: "🐱" }, { word: "兔子", emoji: "🐰" },
-                { word: "熊貓", emoji: "🐼" }, { word: "猴子", emoji: "🐵" }
+                { word: "獅子", query: "lion" }, { word: "大象", query: "elephant" }, { word: "長頸鹿", query: "giraffe" },
+                { word: "小狗", query: "puppy" }, { word: "小貓", query: "kitten" }, { word: "兔子", query: "rabbit" },
+                { word: "熊貓", query: "panda" }, { word: "猴子", query: "monkey" }
             ],
             items: [
-                { word: "牙刷", emoji: "🪥" }, { word: "毛巾", emoji: "🧼" }, { word: "杯子", emoji: "🥛" },
-                { word: "雨傘", emoji: "☂️" }, { word: "書包", emoji: "🎒" }, { word: "剪刀", emoji: "✂️" },
-                { word: "手錶", emoji: "⌚" }, { word: "鑰匙", emoji: "🔑" }
+                { word: "牙刷", query: "toothbrush" }, { word: "毛巾", query: "towel" }, { word: "杯子", query: "cup" },
+                { word: "雨傘", query: "umbrella" }, { word: "書包", query: "backpack" }, { word: "剪刀", query: "scissors" },
+                { word: "手錶", query: "wristwatch" }, { word: "鑰匙", query: "key" }
             ],
             jobs: [
-                { word: "醫生", emoji: "🧑‍⚕️" }, { word: "消防員", emoji: "👨‍🚒" }, { word: "警察", emoji: "👮" },
-                { word: "廚師", emoji: "👨‍🍳" }, { word: "老師", emoji: "🧑‍🏫" }, { word: "太空人", emoji: "👨‍🚀" },
-                { word: "畫家", emoji: "🧑‍🎨" }, { word: "農夫", emoji: "🧑‍🌾" }
+                { word: "醫生", query: "doctor" }, { word: "消防員", query: "firefighter" }, { word: "警察", query: "police officer" },
+                { word: "廚師", query: "chef" }, { word: "老師", query: "teacher" }, { word: "太空人", query: "astronaut" },
+                { word: "畫家", query: "painter" }, { word: "農夫", query: "farmer" }
             ]
         };
 
-        // Emoji 即時智能匹配字典 (當幼兒自行輸入時，用來即時配對圖片)
-        const emojiDictionary = {
-            "西瓜": "🍉", "草莓": "🍓", "香蕉": "🍌", "葡萄": "🍇", "橙": "🍊", "橘子": "🍊", "櫻桃": "🍒", "桃子": "🍑", "鳳梨": "🍍", "菠蘿": "🍍",
-            "飛機": "✈️", "直升機": "🚁", "火車": "🚂", "船": "🚢", "自行車": "🚲", "單車": "🚲", "摩托車": "🏍️", "火箭": "🚀", "氣球": "🎈",
-            "太陽": "☀️", "月亮": "🌙", "星星": "⭐", "彩虹": "🌈", "雲": "☁️", "雨": "🌧️", "雪人": "☃️", "花": "🌸", "樹": "🌳",
-            "魚": "🐟", "鳥": "🐦", "恐龍": "🦖", "螃蟹": "🦀", "烏龜": "🐢", "青蛙": "🐸", "蝴蝶": "🦋", "蜜蜂": "🐝",
-            "電視": "📺", "電話": "📱", "電腦": "💻", "帽子": "🧢", "衣服": "👕", "鞋子": "👟", "眼鏡": "👓", "書": "📖"
+        // 常用自訂翻譯對照表
+        const translationDictionary = {
+            "西瓜": "watermelon", "草莓": "strawberry", "香蕉": "banana", "葡萄": "grapes", "橙": "orange", "橘子": "orange", "蘋果": "apple", "櫻桃": "cherry", "桃子": "peach", "鳳梨": "pineapple", "菠蘿": "pineapple",
+            "飛機": "airplane", "直升機": "helicopter", "火車": "train", "船": "ship", "自行車": "bicycle", "單車": "bicycle", "摩托車": "motorcycle", "火箭": "rocket", "氣球": "balloon", "巴士": "bus", "汽車": "car",
+            "太陽": "sun", "月亮": "moon", "星星": "star", "彩虹": "rainbow", "雲": "cloud", "雨": "rain", "雪人": "snowman", "花": "flower", "樹": "tree",
+            "魚": "fish", "鳥": "bird", "恐龍": "dinosaur", "螃蟹": "crab", "烏龜": "turtle", "青蛙": "frog", "蝴蝶": "butterfly", "蜜蜂": "bee",
+            "電視": "television", "電話": "phone", "電腦": "computer", "帽子": "hat", "衣服": "shirt", "鞋子": "shoes", "眼鏡": "glasses", "書": "book"
         };
 
         let currentTheme = 'animals';
@@ -265,165 +321,175 @@
             return array;
         }
 
-        function changeTheme() {
+        function changeTheme(shouldSpeak = true) {
             currentTheme = document.getElementById('theme-select').value;
             currentList = shuffle([...database[currentTheme]]);
             currentIndex = 0;
-            updateCard();
+            updateCard(shouldSpeak);
         }
 
-        function updateCard() {
-            const item = currentList[currentIndex];
-            const card = document.getElementById('card');
-            const emojiDiv = document.getElementById('emoji-pic');
-            
-            card.style.animation = 'none';
-            card.offsetHeight; 
-            card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+        // 非同步向 Pexels 獲取圖片
+        async function fetchPexelsImage(query) {
+            try {
+                // 如果金鑰未設定，直接拋出錯誤使用備用語
+                if (!PEXELS_API_KEY || PEXELS_API_KEY.includes("YOUR_PEXELS_API_KEY")) {
+                    throw new Error('API Key missing');
+                }
 
-            // 重置樣式 (防止自訂卡片的純文字樣式殘留到一般卡片)
-            emojiDiv.style.backgroundColor = "transparent";
-            emojiDiv.style.color = "initial";
-            emojiDiv.style.fontSize = "7.5rem";
-
-            emojiDiv.innerText = item.emoji;
-            document.getElementById('word-text').innerText = item.word;
-            
-            speakWord();
+                const response = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=square`, {
+                    headers: {
+                        Authorization: PEXELS_API_KEY
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Pexels API Request Failed');
+                
+                const data = await response.json();
+                if (data.photos && data.photos.length > 0) {
+                    // 返回中等大小的方形圖片，載入速度快
+                    return data.photos[0].src.medium;
+                } else {
+                    // 如果搜尋無結果，再次嘗試不帶條件的通用搜尋
+                    const backupResponse = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`, {
+                        headers: { Authorization: PEXELS_API_KEY }
+                    });
+                    const backupData = await backupResponse.json();
+                    if (backupData.photos && backupData.photos.length > 0) {
+                        return backupData.photos[0].src.large;
+                    }
+                    throw new Error('No photos found');
+                }
+            } catch (error) {
+                console.warn('Pexels 載入失敗，切換至安全備用源:', error);
+                // 備用源：LoremFlickr
+                return `https://loremflickr.com/400/400/${encodeURIComponent(query)}/all`;
+            }
         }
 
-        // 新增：即時生成自訂字卡
-        function generateCustomCard() {
-            const inputField = document.getElementById('custom-input');
-            const rawText = inputField.value.trim();
-            if (!rawText) return;
+        // 更新卡片內容
+        async function updateCard(shouldSpeak = true) {
+            try {
+                if (currentList.length === 0) return;
+                const item = currentList[currentIndex];
+                const imgCard = document.getElementById('image-card');
+                const txtCard = document.getElementById('text-card');
+                const realPic = document.getElementById('real-pic');
+                
+                // 卡片彈出動畫
+                imgCard.style.animation = 'none';
+                txtCard.style.animation = 'none';
+                imgCard.offsetHeight; 
+                txtCard.offsetHeight; 
+                imgCard.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+                txtCard.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
 
-            // 1. 嘗試尋找對應的 Emoji
-            let foundEmoji = "";
-            
-            // 精準匹配
-            if (emojiDictionary[rawText]) {
-                foundEmoji = emojiDictionary[rawText];
-            } else {
-                // 部分模糊匹配 (例如：輸入「大紅蘋果」能匹配到「蘋果」的 Emoji)
-                for (let key in emojiDictionary) {
-                    if (rawText.includes(key) || key.includes(rawText)) {
-                        foundEmoji = emojiDictionary[key];
-                        break;
+                // 先隱藏舊圖片，呈現載入中狀態
+                realPic.style.opacity = '0';
+
+                // 獲取 Pexels 高清圖網址
+                const imageUrl = await fetchPexelsImage(item.query);
+                realPic.src = imageUrl;
+
+                // 當圖片成功下載完畢後才顯示，防止白屏或閃爍
+                realPic.onload = function() {
+                    realPic.style.opacity = '1';
+                };
+
+                document.getElementById('word-text').innerText = item.word;
+                
+                if (shouldSpeak) {
+                    speakWord();
+                }
+            } catch (e) {
+                console.error("更新卡片時出錯: ", e);
+            }
+        }
+
+        // 自訂生成實物字卡
+        async function generateCustomCard() {
+            try {
+                const inputField = document.getElementById('custom-input');
+                const rawText = inputField.value.trim();
+                if (!rawText) return;
+
+                let englishQuery = rawText;
+                if (translationDictionary[rawText]) {
+                    englishQuery = translationDictionary[rawText];
+                } else {
+                    for (let key in translationDictionary) {
+                        if (rawText.includes(key) || key.includes(rawText)) {
+                            englishQuery = translationDictionary[key];
+                            break;
+                        }
                     }
                 }
-            }
 
-            const card = document.getElementById('card');
-            const emojiDiv = document.getElementById('emoji-pic');
-            
-            card.style.animation = 'none';
-            card.offsetHeight;
-            card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
-
-            document.getElementById('word-text').innerText = rawText;
-
-            if (foundEmoji) {
-                // 找到了 Emoji，正常顯示
-                emojiDiv.style.backgroundColor = "transparent";
-                emojiDiv.style.fontSize = "7.5rem";
-                emojiDiv.innerText = foundEmoji;
-                // 將這張新字卡悄悄塞進當前的循環列表，讓上下頁可以切換回來
-                currentList.splice(currentIndex + 1, 0, { word: rawText, emoji: foundEmoji });
-                currentIndex++;
-            } else {
-                // 找不到 Emoji，自動生成彩色首字文字章 (Text Icon)
-                const colors = ["#ff6b6b", "#4dadf7", "#51cf66", "#fcc419", "#cc5de8", "#ff922b"];
-                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                const imgCard = document.getElementById('image-card');
+                const txtCard = document.getElementById('text-card');
+                const realPic = document.getElementById('real-pic');
                 
-                emojiDiv.innerText = rawText.charAt(0); // 取第一個字
-                emojiDiv.style.backgroundColor = randomColor;
-                emojiDiv.style.color = "white";
-                emojiDiv.style.fontSize = "4.5rem";
-                emojiDiv.style.fontWeight = "900";
+                imgCard.style.animation = 'none';
+                txtCard.style.animation = 'none';
+                imgCard.offsetHeight;
+                txtCard.offsetHeight;
+                imgCard.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+                txtCard.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
 
-                currentList.splice(currentIndex + 1, 0, { word: rawText, emoji: rawText.charAt(0), isCustomText: true, bgColor: randomColor });
+                document.getElementById('word-text').innerText = rawText;
+                
+                realPic.style.opacity = '0';
+                
+                // 修正：此處使用 englishQuery 變數
+                const imageUrl = await fetchPexelsImage(englishQuery);
+                realPic.src = imageUrl;
+                realPic.onload = function() {
+                    realPic.style.opacity = '1';
+                };
+
+                currentList.splice(currentIndex + 1, 0, { word: rawText, query: englishQuery });
                 currentIndex++;
-            }
 
-            inputField.value = ""; // 清空輸入欄
-            inputField.blur(); // 收起鍵盤
-            
-            speakWord();
+                inputField.value = "";
+                inputField.blur();
+                
+                speakWord();
+            } catch (e) {
+                console.error("生成自訂卡片時出錯: ", e);
+            }
         }
 
         function nextCard() {
             if (currentIndex < currentList.length - 1) {
                 currentIndex++;
-                const item = currentList[currentIndex];
-                const card = document.getElementById('card');
-                const emojiDiv = document.getElementById('emoji-pic');
-                
-                card.style.animation = 'none';
-                card.offsetHeight;
-                card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
-
-                document.getElementById('word-text').innerText = item.word;
-
-                if (item.isCustomText) {
-                    emojiDiv.innerText = item.emoji;
-                    emojiDiv.style.backgroundColor = item.bgColor;
-                    emojiDiv.style.color = "white";
-                    emojiDiv.style.fontSize = "4.5rem";
-                    emojiDiv.style.fontWeight = "900";
-                } else {
-                    emojiDiv.style.backgroundColor = "transparent";
-                    emojiDiv.style.color = "initial";
-                    emojiDiv.style.fontSize = "7.5rem";
-                    emojiDiv.innerText = item.emoji;
-                }
-                speakWord();
+                updateCard(true);
             } else {
                 currentList = shuffle([...database[currentTheme]]);
                 currentIndex = 0;
-                updateCard();
+                updateCard(true);
             }
         }
 
         function prevCard() {
             if (currentIndex > 0) {
                 currentIndex--;
-                const item = currentList[currentIndex];
-                const card = document.getElementById('card');
-                const emojiDiv = document.getElementById('emoji-pic');
-                
-                card.style.animation = 'none';
-                card.offsetHeight;
-                card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
-
-                document.getElementById('word-text').innerText = item.word;
-
-                if (item.isCustomText) {
-                    emojiDiv.innerText = item.emoji;
-                    emojiDiv.style.backgroundColor = item.bgColor;
-                    emojiDiv.style.color = "white";
-                    emojiDiv.style.fontSize = "4.5rem";
-                    emojiDiv.style.fontWeight = "900";
-                } else {
-                    emojiDiv.style.backgroundColor = "transparent";
-                    emojiDiv.style.color = "initial";
-                    emojiDiv.style.fontSize = "7.5rem";
-                    emojiDiv.innerText = item.emoji;
-                }
-                speakWord();
+                updateCard(true);
             }
         }
 
         function speakWord() {
-            const text = document.getElementById('word-text').innerText;
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            const voices = window.speechSynthesis.getVoices();
-            const cantoneseVoice = voices.find(v => v.lang.includes('HK') || v.lang.includes('yue') || v.lang.includes('zh-HK'));
-            if (cantoneseVoice) utterance.voice = cantoneseVoice;
-            utterance.rate = 0.85;
-            utterance.pitch = 1.1;
-            window.speechSynthesis.speak(utterance);
+            try {
+                const text = document.getElementById('word-text').innerText;
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                const voices = window.speechSynthesis.getVoices();
+                const cantoneseVoice = voices.find(v => v.lang.includes('HK') || v.lang.includes('yue') || v.lang.includes('zh-HK'));
+                if (cantoneseVoice) utterance.voice = cantoneseVoice;
+                utterance.rate = 0.85;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.error("發音時出錯: ", e);
+            }
         }
 
         document.getElementById('speak-btn').addEventListener('click', speakWord);
@@ -432,13 +498,18 @@
             speakWord();
         });
 
-        // 支援按 Enter 鍵直接變魔術
         document.getElementById('custom-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') generateCustomCard();
         });
 
+        if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
         window.onload = () => {
-            changeTheme();
+            changeTheme(false); // 第一次進入不自動發聲
         };
     </script>
 </body>
