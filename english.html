@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>English Flashcards</title>
+    <title>English Flashcards (Pexels HD Version)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -49,68 +49,95 @@
             font-weight: bold;
             color: #1e293b;
         }
+        
+        /* 左右雙卡容器 */
         #flashcard-area {
             flex: 1;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 15px;
+            padding: 20px;
+            gap: 24px;
+            width: 100%;
+            max-width: 950px;
+            margin: 0 auto;
         }
-        #card {
+
+        /* 雙卡通用基礎樣式 */
+        .game-card {
             background: white;
-            width: 90%;
-            max-width: 320px;
-            height: 55%;
-            max-height: 400px;
+            flex: 1;
+            height: 60%;
+            max-height: 450px;
             border-radius: 32px;
             box-shadow: 0 15px 30px rgba(0,0,0,0.08);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-around;
+            justify-content: center;
             padding: 20px;
-            border: 6px solid #339af0;
+            position: relative;
+            overflow: hidden; /* 裁剪超出圓角的圖片 */
             animation: cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
         }
-        #emoji-pic {
-            font-size: 7.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
+
+        /* 左邊相片卡：藍色邊框，貼緊邊緣 */
+        #image-card {
+            border: 6px solid #339af0;
+            padding: 0; 
+            background-color: #f1f3f5;
         }
+
+        /* 右邊文字卡：深藍色邊框 */
+        #text-card {
+            border: 6px solid #228be6;
+        }
+
+        /* Pexels 真實圖片樣式 */
+        #real-pic {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 22px;
+            transition: opacity 0.3s ease;
+            opacity: 0; /* 下載完才顯示 */
+        }
+
+        /* 文字大小與樣式 */
         #word-text {
-            font-size: 2.8rem;
+            font-size: 4rem;
             font-weight: 900;
             color: #1a252f;
             text-transform: capitalize;
             text-align: center;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            width: 100%;
+            word-break: break-all;
+            padding: 0 10px;
         }
+
+        /* 發聲按鈕 */
         #speak-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
             background-color: #3b82f6;
             border: none;
-            width: 65px;
-            height: 65px;
+            width: 55px;
+            height: 55px;
             border-radius: 50%;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             color: white;
             cursor: pointer;
-            box-shadow: 0 5px 0 #1d4ed8;
+            box-shadow: 0 4px 0 #1d4ed8;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         #speak-btn:active {
-            transform: translateY(3px);
+            transform: translateY(2px);
             box-shadow: 0 2px 0 #1d4ed8;
         }
+
         /* 進階自訂輸入區 */
         #custom-panel {
             background-color: #fff;
@@ -190,6 +217,25 @@
             0% { transform: scale(0.8); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
+
+        /* 窄螢幕 RWD 自適應 */
+        @media (max-width: 600px) {
+            #flashcard-area {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .game-card {
+                width: 100%;
+                height: 40%;
+                padding: 15px;
+            }
+            #image-card {
+                padding: 0;
+            }
+            #word-text {
+                font-size: 3rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -204,8 +250,13 @@
     </div>
 
     <div id="flashcard-area">
-        <div id="card">
-            <div id="emoji-pic">🦁</div>
+        <!-- 左卡：純真實相片 -->
+        <div id="image-card" class="game-card">
+            <img id="real-pic" src="" alt="Real Photo">
+        </div>
+
+        <!-- 右卡：純文字 -->
+        <div id="text-card" class="game-card">
             <div id="word-text">Lion</div>
             <button id="speak-btn">🔊</button>
         </div>
@@ -216,7 +267,7 @@
         <button id="next-btn" class="nav-btn" onclick="nextCard()">Next ▶</button>
     </div>
 
-    <!-- 新增：進階自訂生成區 -->
+    <!-- 進階自訂生成區 -->
     <div id="custom-panel">
         <div class="custom-title">🪄 Magic Card Maker (Siri Voice typing friendly):</div>
         <div class="input-row">
@@ -226,31 +277,25 @@
     </div>
 
     <script>
+        // Pexels API 金鑰
+        const PEXELS_API_KEY = "pzMoBCE8OR6nBcm0MfRs5QySojQ5Q6foGmduaVWvExJp5MLS0JhCqMmB";
+
         const database = {
             animals: [
-                { word: "Lion", emoji: "🦁" }, { word: "Elephant", emoji: "🐘" }, { word: "Giraffe", emoji: "🦒" },
-                { word: "Dog", emoji: "🐶" }, { word: "Cat", emoji: "🐱" }, { word: "Rabbit", emoji: "🐰" },
-                { word: "Panda", emoji: "🐼" }, { word: "Monkey", emoji: "🐵" }
+                { word: "Lion", query: "lion" }, { word: "Elephant", query: "elephant" }, { word: "Giraffe", query: "giraffe" },
+                { word: "Dog", query: "puppy" }, { word: "Cat", query: "kitten" }, { word: "Rabbit", query: "rabbit" },
+                { word: "Panda", query: "panda" }, { word: "Monkey", query: "monkey" }
             ],
             items: [
-                { word: "Toothbrush", emoji: "🪥" }, { word: "Towel", emoji: "🧼" }, { word: "Cup", emoji: "🥛" },
-                { word: "Umbrella", emoji: "☂️" }, { word: "Backpack", emoji: "🎒" }, { word: "Scissors", emoji: "✂️" },
-                { word: "Watch", emoji: "⌚" }, { word: "Key", emoji: "🔑" }
+                { word: "Toothbrush", query: "toothbrush" }, { word: "Towel", query: "towel" }, { word: "Cup", query: "cup" },
+                { word: "Umbrella", query: "umbrella" }, { word: "Backpack", query: "backpack" }, { word: "Scissors", query: "scissors" },
+                { word: "Watch", query: "wristwatch" }, { word: "Key", query: "key" }
             ],
             jobs: [
-                { word: "Doctor", emoji: "🧑‍⚕️" }, { word: "Firefighter", emoji: "👨‍🚒" }, { word: "Police", emoji: "👮" },
-                { word: "Chef", emoji: "👨‍🍳" }, { word: "Teacher", emoji: "🧑‍🏫" }, { word: "Astronaut", emoji: "👨‍🚀" },
-                { word: "Painter", emoji: "🧑‍🎨" }, { word: "Farmer", emoji: "🧑‍🌾" }
+                { word: "Doctor", query: "doctor" }, { word: "Firefighter", query: "firefighter" }, { word: "Police officer", query: "police officer" },
+                { word: "Chef", query: "chef" }, { word: "Teacher", query: "teacher" }, { word: "Astronaut", query: "astronaut" },
+                { word: "Painter", query: "painter" }, { word: "Farmer", query: "farmer" }
             ]
-        };
-
-        // English Emoji Matching Dictionary
-        const emojiDictionary = {
-            "apple": "🍎", "banana": "🍌", "watermelon": "🍉", "strawberry": "🍓", "orange": "🍊", "peach": "🍑", "pineapple": "🍍",
-            "plane": "✈️", "airplane": "✈️", "helicopter": "🚁", "train": "🚂", "ship": "🚢", "car": "🚗", "bicycle": "🚲", "rocket": "🚀", "balloon": "🎈",
-            "sun": "☀️", "moon": "🌙", "star": "⭐", "rainbow": "🌈", "cloud": "☁️", "rain": "🌧️", "snowman": "☃️", "flower": "🌸", "tree": "🌳",
-            "fish": "🐟", "bird": "🐦", "dinosaur": "🦖", "crab": "🦀", "turtle": "🐢", "frog": "🐸", "butterfly": "🦋", "bee": "🐝",
-            "tv": "📺", "television": "📺", "phone": "📱", "computer": "💻", "hat": "🧢", "shirt": "👕", "shoes": "👟", "glasses": "👓", "book": "📖"
         };
 
         let currentTheme = 'animals';
@@ -265,161 +310,151 @@
             return array;
         }
 
-        function changeTheme() {
+        function changeTheme(shouldSpeak = true) {
             currentTheme = document.getElementById('theme-select').value;
             currentList = shuffle([...database[currentTheme]]);
             currentIndex = 0;
-            updateCard();
+            updateCard(shouldSpeak);
         }
 
-        function updateCard() {
-            const item = currentList[currentIndex];
-            const card = document.getElementById('card');
-            const emojiDiv = document.getElementById('emoji-pic');
-            
-            card.style.animation = 'none';
-            card.offsetHeight; 
-            card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+        // 非同步向 Pexels 獲取圖片
+        async function fetchPexelsImage(query) {
+            try {
+                if (!PEXELS_API_KEY) throw new Error('API Key missing');
 
-            emojiDiv.style.backgroundColor = "transparent";
-            emojiDiv.style.color = "initial";
-            emojiDiv.style.fontSize = "7.5rem";
-
-            emojiDiv.innerText = item.emoji;
-            document.getElementById('word-text').innerText = item.word;
-            
-            speakWord();
-        }
-
-        // New feature: Generate custom flashcard
-        function generateCustomCard() {
-            const inputField = document.getElementById('custom-input');
-            const rawText = inputField.value.trim();
-            if (!rawText) return;
-
-            let foundEmoji = "";
-            const lowerText = rawText.toLowerCase();
-            
-            if (emojiDictionary[lowerText]) {
-                foundEmoji = emojiDictionary[lowerText];
-            } else {
-                for (let key in emojiDictionary) {
-                    if (lowerText.includes(key) || key.includes(lowerText)) {
-                        foundEmoji = emojiDictionary[key];
-                        break;
+                const response = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=square`, {
+                    headers: {
+                        Authorization: PEXELS_API_KEY
                     }
-                }
-            }
-
-            const card = document.getElementById('card');
-            const emojiDiv = document.getElementById('emoji-pic');
-            
-            card.style.animation = 'none';
-            card.offsetHeight;
-            card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
-
-            document.getElementById('word-text').innerText = rawText;
-
-            if (foundEmoji) {
-                emojiDiv.style.backgroundColor = "transparent";
-                emojiDiv.style.fontSize = "7.5rem";
-                emojiDiv.innerText = foundEmoji;
-                currentList.splice(currentIndex + 1, 0, { word: rawText, emoji: foundEmoji });
-                currentIndex++;
-            } else {
-                // Generates a colorful Letter Stamp using the first letter (uppercase)
-                const colors = ["#ff6b6b", "#4dadf7", "#51cf66", "#fcc419", "#cc5de8", "#ff922b"];
-                const randomColor = colors[Math.floor(Math.random() * colors.length)];
-                const firstLetter = rawText.charAt(0).toUpperCase();
+                });
                 
-                emojiDiv.innerText = firstLetter;
-                emojiDiv.style.backgroundColor = randomColor;
-                emojiDiv.style.color = "white";
-                emojiDiv.style.fontSize = "4.5rem";
-                emojiDiv.style.fontWeight = "900";
-
-                currentList.splice(currentIndex + 1, 0, { word: rawText, emoji: firstLetter, isCustomText: true, bgColor: randomColor });
-                currentIndex++;
+                if (!response.ok) throw new Error('Pexels API Request Failed');
+                
+                const data = await response.json();
+                if (data.photos && data.photos.length > 0) {
+                    return data.photos[0].src.medium;
+                } else {
+                    const backupResponse = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`, {
+                        headers: { Authorization: PEXELS_API_KEY }
+                    });
+                    const backupData = await backupResponse.json();
+                    if (backupData.photos && backupData.photos.length > 0) {
+                        return backupData.photos[0].src.large;
+                    }
+                    throw new Error('No photos found');
+                }
+            } catch (error) {
+                console.warn('Pexels failed, switching to backup source:', error);
+                return `https://loremflickr.com/400/400/${encodeURIComponent(query)}/all`;
             }
+        }
 
-            inputField.value = "";
-            inputField.blur(); // Dismiss iPhone keyboard
-            
-            speakWord();
+        // 更新卡片內容
+        async function updateCard(shouldSpeak = true) {
+            try {
+                if (currentList.length === 0) return;
+                const item = currentList[currentIndex];
+                const imgCard = document.getElementById('image-card');
+                const txtCard = document.getElementById('text-card');
+                const realPic = document.getElementById('real-pic');
+                
+                imgCard.style.animation = 'none';
+                txtCard.style.animation = 'none';
+                imgCard.offsetHeight; 
+                txtCard.offsetHeight; 
+                imgCard.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+                txtCard.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+
+                realPic.style.opacity = '0';
+
+                const imageUrl = await fetchPexelsImage(item.query);
+                realPic.src = imageUrl;
+
+                realPic.onload = function() {
+                    realPic.style.opacity = '1';
+                };
+
+                document.getElementById('word-text').innerText = item.word;
+                
+                if (shouldSpeak) {
+                    speakWord();
+                }
+            } catch (e) {
+                console.error("Error updating card: ", e);
+            }
+        }
+
+        // 自訂生成英文實物字卡
+        async function generateCustomCard() {
+            try {
+                const inputField = document.getElementById('custom-input');
+                const rawText = inputField.value.trim();
+                if (!rawText) return;
+
+                const imgCard = document.getElementById('image-card');
+                const txtCard = document.getElementById('text-card');
+                const realPic = document.getElementById('real-pic');
+                
+                imgCard.style.animation = 'none';
+                txtCard.style.animation = 'none';
+                imgCard.offsetHeight;
+                txtCard.offsetHeight;
+                imgCard.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+                txtCard.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+
+                document.getElementById('word-text').innerText = rawText;
+                realPic.style.opacity = '0';
+                
+                const imageUrl = await fetchPexelsImage(rawText);
+                realPic.src = imageUrl;
+                realPic.onload = function() {
+                    realPic.style.opacity = '1';
+                };
+
+                currentList.splice(currentIndex + 1, 0, { word: rawText, query: rawText });
+                currentIndex++;
+
+                inputField.value = "";
+                inputField.blur();
+                
+                speakWord();
+            } catch (e) {
+                console.error("Error generating custom card: ", e);
+            }
         }
 
         function nextCard() {
             if (currentIndex < currentList.length - 1) {
                 currentIndex++;
-                const item = currentList[currentIndex];
-                const card = document.getElementById('card');
-                const emojiDiv = document.getElementById('emoji-pic');
-                
-                card.style.animation = 'none';
-                card.offsetHeight;
-                card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
-
-                document.getElementById('word-text').innerText = item.word;
-
-                if (item.isCustomText) {
-                    emojiDiv.innerText = item.emoji;
-                    emojiDiv.style.backgroundColor = item.bgColor;
-                    emojiDiv.style.color = "white";
-                    emojiDiv.style.fontSize = "4.5rem";
-                    emojiDiv.style.fontWeight = "900";
-                } else {
-                    emojiDiv.style.backgroundColor = "transparent";
-                    emojiDiv.style.color = "initial";
-                    emojiDiv.style.fontSize = "7.5rem";
-                    emojiDiv.innerText = item.emoji;
-                }
-                speakWord();
+                updateCard(true);
             } else {
                 currentList = shuffle([...database[currentTheme]]);
                 currentIndex = 0;
-                updateCard();
+                updateCard(true);
             }
         }
 
         function prevCard() {
             if (currentIndex > 0) {
                 currentIndex--;
-                const item = currentList[currentIndex];
-                const card = document.getElementById('card');
-                const emojiDiv = document.getElementById('emoji-pic');
-                
-                card.style.animation = 'none';
-                card.offsetHeight;
-                card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
-
-                document.getElementById('word-text').innerText = item.word;
-
-                if (item.isCustomText) {
-                    emojiDiv.innerText = item.emoji;
-                    emojiDiv.style.backgroundColor = item.bgColor;
-                    emojiDiv.style.color = "white";
-                    emojiDiv.style.fontSize = "4.5rem";
-                    emojiDiv.style.fontWeight = "900";
-                } else {
-                    emojiDiv.style.backgroundColor = "transparent";
-                    emojiDiv.style.color = "initial";
-                    emojiDiv.style.fontSize = "7.5rem";
-                    emojiDiv.innerText = item.emoji;
-                }
-                speakWord();
+                updateCard(true);
             }
         }
 
         function speakWord() {
-            const text = document.getElementById('word-text').innerText;
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            const voices = window.speechSynthesis.getVoices();
-            const englishVoice = voices.find(v => v.lang.includes('US') || v.lang.includes('en-US') || v.lang.startsWith('en'));
-            if (englishVoice) utterance.voice = englishVoice;
-            utterance.rate = 0.8;
-            utterance.pitch = 1.1;
-            window.speechSynthesis.speak(utterance);
+            try {
+                const text = document.getElementById('word-text').innerText;
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                const voices = window.speechSynthesis.getVoices();
+                const englishVoice = voices.find(v => v.lang.includes('US') || v.lang.includes('en-US') || v.lang.startsWith('en'));
+                if (englishVoice) utterance.voice = englishVoice;
+                utterance.rate = 0.8;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.error("Speech synthesis error: ", e);
+            }
         }
 
         document.getElementById('speak-btn').addEventListener('click', speakWord);
@@ -432,8 +467,14 @@
             if (e.key === 'Enter') generateCustomCard();
         });
 
+        if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
         window.onload = () => {
-            changeTheme();
+            changeTheme(false); // 第一頁進去不自動發聲
         };
     </script>
 </body>
