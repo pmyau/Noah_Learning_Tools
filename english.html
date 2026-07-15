@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>English Flashcards</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #eef2f7;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #control-panel {
+            background-color: #ffffff;
+            padding: 10px 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+        .home-btn {
+            font-size: 1rem;
+            padding: 8px 12px;
+            background-color: #748ffc;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        select {
+            font-size: 1rem;
+            padding: 8px 12px;
+            border: 3px solid #cbd5e1;
+            border-radius: 12px;
+            background-color: white;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        #flashcard-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+        #card {
+            background: white;
+            width: 90%;
+            max-width: 320px;
+            height: 55%;
+            max-height: 400px;
+            border-radius: 32px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            padding: 20px;
+            border: 6px solid #339af0;
+            animation: cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+        }
+        #emoji-pic {
+            font-size: 7.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+        }
+        #word-text {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: #1a252f;
+            text-transform: capitalize;
+            text-align: center;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #speak-btn {
+            background-color: #3b82f6;
+            border: none;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #1d4ed8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #speak-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #1d4ed8;
+        }
+        /* 進階自訂輸入區 */
+        #custom-panel {
+            background-color: #fff;
+            padding: 12px 15px;
+            border-top: 2px dashed #dbe4ff;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            z-index: 10;
+        }
+        .custom-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .input-row {
+            display: flex;
+            width: 100%;
+            max-width: 360px;
+            gap: 8px;
+        }
+        input[type="text"] {
+            flex: 1;
+            font-size: 1.1rem;
+            padding: 10px 14px;
+            border: 3px solid #dbe4ff;
+            border-radius: 16px;
+            outline: none;
+            color: #1a252f;
+            font-weight: bold;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        input[type="text"]:focus {
+            border-color: #3b82f6;
+        }
+        .magic-btn {
+            font-size: 1.1rem;
+            padding: 10px 16px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #1d4ed8;
+        }
+        .magic-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #1d4ed8;
+        }
+        #nav-panel {
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+        .nav-btn {
+            font-size: 1.1rem;
+            padding: 10px 24px;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+        }
+        #prev-btn { background-color: #adb5bd; box-shadow: 0 5px 0 #868e96; }
+        #prev-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #868e96; }
+        #next-btn { background-color: #4dadf7; box-shadow: 0 5px 0 #339af0; }
+        #next-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #339af0; }
+
+        @keyframes cardPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="control-panel">
+        <a href="index.html" class="home-btn">🏠 Home</a>
+        <select id="theme-select" onchange="changeTheme()">
+            <option value="animals">🦁 Animals</option>
+            <option value="items">🧸 Items</option>
+            <option value="jobs">👨‍🚀 Jobs</option>
+        </select>
+    </div>
+
+    <div id="flashcard-area">
+        <div id="card">
+            <div id="emoji-pic">🦁</div>
+            <div id="word-text">Lion</div>
+            <button id="speak-btn">🔊</button>
+        </div>
+    </div>
+
+    <div id="nav-panel">
+        <button id="prev-btn" class="nav-btn" onclick="prevCard()">◀ Prev</button>
+        <button id="next-btn" class="nav-btn" onclick="nextCard()">Next ▶</button>
+    </div>
+
+    <!-- 新增：進階自訂生成區 -->
+    <div id="custom-panel">
+        <div class="custom-title">🪄 Magic Card Maker (Siri Voice typing friendly):</div>
+        <div class="input-row">
+            <input type="text" id="custom-input" placeholder="e.g. apple, plane, car, sun..." maxlength="15">
+            <button class="magic-btn" onclick="generateCustomCard()">Go!</button>
+        </div>
+    </div>
+
+    <script>
+        const database = {
+            animals: [
+                { word: "Lion", emoji: "🦁" }, { word: "Elephant", emoji: "🐘" }, { word: "Giraffe", emoji: "🦒" },
+                { word: "Dog", emoji: "🐶" }, { word: "Cat", emoji: "🐱" }, { word: "Rabbit", emoji: "🐰" },
+                { word: "Panda", emoji: "🐼" }, { word: "Monkey", emoji: "🐵" }
+            ],
+            items: [
+                { word: "Toothbrush", emoji: "🪥" }, { word: "Towel", emoji: "🧼" }, { word: "Cup", emoji: "🥛" },
+                { word: "Umbrella", emoji: "☂️" }, { word: "Backpack", emoji: "🎒" }, { word: "Scissors", emoji: "✂️" },
+                { word: "Watch", emoji: "⌚" }, { word: "Key", emoji: "🔑" }
+            ],
+            jobs: [
+                { word: "Doctor", emoji: "🧑‍⚕️" }, { word: "Firefighter", emoji: "👨‍🚒" }, { word: "Police", emoji: "👮" },
+                { word: "Chef", emoji: "👨‍🍳" }, { word: "Teacher", emoji: "🧑‍🏫" }, { word: "Astronaut", emoji: "👨‍🚀" },
+                { word: "Painter", emoji: "🧑‍🎨" }, { word: "Farmer", emoji: "🧑‍🌾" }
+            ]
+        };
+
+        // English Emoji Matching Dictionary
+        const emojiDictionary = {
+            "apple": "🍎", "banana": "🍌", "watermelon": "🍉", "strawberry": "🍓", "orange": "🍊", "peach": "🍑", "pineapple": "🍍",
+            "plane": "✈️", "airplane": "✈️", "helicopter": "🚁", "train": "🚂", "ship": "🚢", "car": "🚗", "bicycle": "🚲", "rocket": "🚀", "balloon": "🎈",
+            "sun": "☀️", "moon": "🌙", "star": "⭐", "rainbow": "🌈", "cloud": "☁️", "rain": "🌧️", "snowman": "☃️", "flower": "🌸", "tree": "🌳",
+            "fish": "🐟", "bird": "🐦", "dinosaur": "🦖", "crab": "🦀", "turtle": "🐢", "frog": "🐸", "butterfly": "🦋", "bee": "🐝",
+            "tv": "📺", "television": "📺", "phone": "📱", "computer": "💻", "hat": "🧢", "shirt": "👕", "shoes": "👟", "glasses": "👓", "book": "📖"
+        };
+
+        let currentTheme = 'animals';
+        let currentList = [];
+        let currentIndex = 0;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function changeTheme() {
+            currentTheme = document.getElementById('theme-select').value;
+            currentList = shuffle([...database[currentTheme]]);
+            currentIndex = 0;
+            updateCard();
+        }
+
+        function updateCard() {
+            const item = currentList[currentIndex];
+            const card = document.getElementById('card');
+            const emojiDiv = document.getElementById('emoji-pic');
+            
+            card.style.animation = 'none';
+            card.offsetHeight; 
+            card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+
+            emojiDiv.style.backgroundColor = "transparent";
+            emojiDiv.style.color = "initial";
+            emojiDiv.style.fontSize = "7.5rem";
+
+            emojiDiv.innerText = item.emoji;
+            document.getElementById('word-text').innerText = item.word;
+            
+            speakWord();
+        }
+
+        // New feature: Generate custom flashcard
+        function generateCustomCard() {
+            const inputField = document.getElementById('custom-input');
+            const rawText = inputField.value.trim();
+            if (!rawText) return;
+
+            let foundEmoji = "";
+            const lowerText = rawText.toLowerCase();
+            
+            if (emojiDictionary[lowerText]) {
+                foundEmoji = emojiDictionary[lowerText];
+            } else {
+                for (let key in emojiDictionary) {
+                    if (lowerText.includes(key) || key.includes(lowerText)) {
+                        foundEmoji = emojiDictionary[key];
+                        break;
+                    }
+                }
+            }
+
+            const card = document.getElementById('card');
+            const emojiDiv = document.getElementById('emoji-pic');
+            
+            card.style.animation = 'none';
+            card.offsetHeight;
+            card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+
+            document.getElementById('word-text').innerText = rawText;
+
+            if (foundEmoji) {
+                emojiDiv.style.backgroundColor = "transparent";
+                emojiDiv.style.fontSize = "7.5rem";
+                emojiDiv.innerText = foundEmoji;
+                currentList.splice(currentIndex + 1, 0, { word: rawText, emoji: foundEmoji });
+                currentIndex++;
+            } else {
+                // Generates a colorful Letter Stamp using the first letter (uppercase)
+                const colors = ["#ff6b6b", "#4dadf7", "#51cf66", "#fcc419", "#cc5de8", "#ff922b"];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                const firstLetter = rawText.charAt(0).toUpperCase();
+                
+                emojiDiv.innerText = firstLetter;
+                emojiDiv.style.backgroundColor = randomColor;
+                emojiDiv.style.color = "white";
+                emojiDiv.style.fontSize = "4.5rem";
+                emojiDiv.style.fontWeight = "900";
+
+                currentList.splice(currentIndex + 1, 0, { word: rawText, emoji: firstLetter, isCustomText: true, bgColor: randomColor });
+                currentIndex++;
+            }
+
+            inputField.value = "";
+            inputField.blur(); // Dismiss iPhone keyboard
+            
+            speakWord();
+        }
+
+        function nextCard() {
+            if (currentIndex < currentList.length - 1) {
+                currentIndex++;
+                const item = currentList[currentIndex];
+                const card = document.getElementById('card');
+                const emojiDiv = document.getElementById('emoji-pic');
+                
+                card.style.animation = 'none';
+                card.offsetHeight;
+                card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+
+                document.getElementById('word-text').innerText = item.word;
+
+                if (item.isCustomText) {
+                    emojiDiv.innerText = item.emoji;
+                    emojiDiv.style.backgroundColor = item.bgColor;
+                    emojiDiv.style.color = "white";
+                    emojiDiv.style.fontSize = "4.5rem";
+                    emojiDiv.style.fontWeight = "900";
+                } else {
+                    emojiDiv.style.backgroundColor = "transparent";
+                    emojiDiv.style.color = "initial";
+                    emojiDiv.style.fontSize = "7.5rem";
+                    emojiDiv.innerText = item.emoji;
+                }
+                speakWord();
+            } else {
+                currentList = shuffle([...database[currentTheme]]);
+                currentIndex = 0;
+                updateCard();
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                const item = currentList[currentIndex];
+                const card = document.getElementById('card');
+                const emojiDiv = document.getElementById('emoji-pic');
+                
+                card.style.animation = 'none';
+                card.offsetHeight;
+                card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+
+                document.getElementById('word-text').innerText = item.word;
+
+                if (item.isCustomText) {
+                    emojiDiv.innerText = item.emoji;
+                    emojiDiv.style.backgroundColor = item.bgColor;
+                    emojiDiv.style.color = "white";
+                    emojiDiv.style.fontSize = "4.5rem";
+                    emojiDiv.style.fontWeight = "900";
+                } else {
+                    emojiDiv.style.backgroundColor = "transparent";
+                    emojiDiv.style.color = "initial";
+                    emojiDiv.style.fontSize = "7.5rem";
+                    emojiDiv.innerText = item.emoji;
+                }
+                speakWord();
+            }
+        }
+
+        function speakWord() {
+            const text = document.getElementById('word-text').innerText;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
+            const englishVoice = voices.find(v => v.lang.includes('US') || v.lang.includes('en-US') || v.lang.startsWith('en'));
+            if (englishVoice) utterance.voice = englishVoice;
+            utterance.rate = 0.8;
+            utterance.pitch = 1.1;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        document.getElementById('speak-btn').addEventListener('click', speakWord);
+        document.getElementById('speak-btn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            speakWord();
+        });
+
+        document.getElementById('custom-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') generateCustomCard();
+        });
+
+        window.onload = () => {
+            changeTheme();
+        };
+    </script>
+</body>
+</html>

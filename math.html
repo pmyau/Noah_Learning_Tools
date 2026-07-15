@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>趣味數學 - 數數看</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f7f9fc;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 🌟 全域嚴格限制不產生任何滾動條 */
+        }
+        #control-panel {
+            background-color: #ffffff;
+            padding: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            z-index: 10;
+        }
+        .home-btn {
+            font-size: 1.1rem;
+            padding: 8px 12px;
+            background-color: #748ffc;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        
+        /* 數字按鈕專屬樣式 */
+        .num-pad-btn {
+            font-size: 1.1rem;
+            padding: 8px 14px;
+            background-color: #e9ecef;
+            color: #495057;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #ced4da;
+            transition: none;
+        }
+        .num-pad-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #ced4da;
+        }
+        /* 清除按鈕特殊顏色 */
+        .num-pad-btn.clear-btn {
+            background-color: #ff8787;
+            color: white;
+            box-shadow: 0 4px 0 #fa5252;
+        }
+        .num-pad-btn.clear-btn:active {
+            box-shadow: 0 2px 0 #fa5252;
+        }
+
+        label { font-size: 1rem; font-weight: bold; color: #4a5568; }
+        input[type="number"] {
+            font-size: 1.1rem;
+            padding: 6px 10px;
+            width: 70px;
+            border: 3px solid #cbd5e1;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+        select {
+            font-size: 1.1rem;
+            padding: 6px 10px;
+            border: 3px solid #cbd5e1;
+            border-radius: 12px;
+            background-color: white;
+            font-weight: bold;
+        }
+        #start-btn {
+            font-size: 1.1rem;
+            padding: 8px 16px;
+            background-color: #51cf66;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #37b24d;
+        }
+        #start-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #37b24d; }
+        
+        /* 舞台：橫向排列 */
+        #game-stage {
+            flex: 1;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            overflow-x: hidden; /* 🌟 嚴格禁止左右水平滾動 */
+            overflow-y: hidden;
+        }
+        
+        /* 大數字：黑色且高對比度 */
+        #big-number {
+            font-size: 8rem;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.85);
+            pointer-events: none;
+            z-index: 1;
+            flex-shrink: 0;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
+            padding-left: 25px; /* 防止緊貼左側邊界 */
+            text-align: center;
+        }
+        
+        /* 圖示網格空間 */
+        #items-grid {
+            flex: 1;
+            height: 100%;
+            display: grid;
+            gap: 8px;
+            justify-content: center;
+            align-content: center;
+            z-index: 2;
+            
+            /* 滾動與溢出設定 */
+            overflow-x: hidden;          /* 🌟 嚴格禁止水平滾動（防止左右穿幫） */
+            overflow-y: auto;            /* 🌟 垂直方向超出時（如 90、100 個），允許上下滑動 */
+            max-height: 100%;            /* 限制最大高度不超出舞台 */
+            padding-right: 4px;          /* 給滾動條留點空隙 */
+            padding-bottom: 30px;        /* 增加底部安全內邊距，防止最後一排滑到底時被截斷 */
+            
+            /* 美化滾動條 */
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        
+        #items-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+        #items-grid::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #items-grid::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        .item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+            -webkit-tap-highlight-color: transparent;
+            max-width: 100%;             /* 🌟 防止元件被硬撐開大於網格欄寬，徹底封殺左右溢出 */
+            aspect-ratio: 1 / 1;         /* 🌟 保持正方形 */
+        }
+        .item.clicked { animation: rubberBand 0.5s forwards; }
+        
+        /* 計數小數字完全置中 */
+        .count-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background-color: rgba(74, 214, 109, 0.95);
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            aspect-ratio: 1 / 1;
+            border: 2px solid #ffffff; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            opacity: 0;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .item.clicked .count-badge { 
+            opacity: 1; 
+            transform: translate(-50%, -50%) scale(1); 
+        }
+
+        /* 行動裝置直式螢幕優化 */
+        @media (max-width: 600px) {
+            #game-stage {
+                flex-direction: column;
+                gap: 15px;
+            }
+            #big-number {
+                font-size: 5rem;
+                padding-left: 0;       /* 直向時不需要左側間距 */
+                padding-top: 10px;     /* 改為預留上方安全間距 */
+                text-align: center;
+                width: 100%;
+            }
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes rubberBand {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.2, 0.8); }
+            50% { transform: scale(0.8, 1.2); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="control-panel">
+        <a href="index.html" class="home-btn">🏠 返回</a>
+        
+        <!-- 「0」-「9」與「C」數字快選按鈕鍵盤 -->
+        <button class="num-pad-btn" onclick="pressNum(1)">1</button>
+        <button class="num-pad-btn" onclick="pressNum(2)">2</button>
+        <button class="num-pad-btn" onclick="pressNum(3)">3</button>
+        <button class="num-pad-btn" onclick="pressNum(4)">4</button>
+        <button class="num-pad-btn" onclick="pressNum(5)">5</button>
+        <button class="num-pad-btn" onclick="pressNum(6)">6</button>
+        <button class="num-pad-btn" onclick="pressNum(7)">7</button>
+        <button class="num-pad-btn" onclick="pressNum(8)">8</button>
+        <button class="num-pad-btn" onclick="pressNum(9)">9</button>
+        <button class="num-pad-btn" onclick="pressNum(0)">0</button>
+        <button class="num-pad-btn clear-btn" onclick="clearNum()"> 清 除 </button>
+
+        <label for="num-input">數字：</label>
+        <input type="number" id="num-input" min="1" max="100" value="48" oninput="validateInput(this)">
+        
+        <select id="type-select">
+            <option value="🦖">恐龍 🦖</option>
+            <option value="🥚">雞蛋 🥚</option>
+            <option value="🦦">水獺 🦦</option>
+            <option value="🐬">海豚 🐬</option>
+            <option value="🧑">人類 🧑</option>
+            <option value="🚗">汽車 🚗</option>
+            <option value="⚽">球球 ⚽</option>
+            <option value="🐶">狗狗 🐶</option>
+            <option value="🐱">貓咪 🐱</option>
+            <option value="🍎">蘋果 🍎</option>
+        </select>
+
+        <button id="start-btn">變出來！</button>
+    </div>
+
+    <div id="game-stage">
+        <div id="big-number">48</div>
+        <div id="items-grid"></div>
+    </div>
+
+    <script>
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        function playPopSound() {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } catch(e){}
+        }
+
+        // 點擊數字按鈕處理邏輯
+        function pressNum(num) {
+            const input = document.getElementById('num-input');
+            let currentVal = input.value;
+            
+            if (currentVal === "0" || currentVal === "") {
+                input.value = num;
+            } else {
+                input.value = currentVal + num;
+            }
+            
+            if (parseInt(input.value) > 100) {
+                input.value = 100;
+            }
+        }
+
+        // 清除數字按鈕邏輯
+        function clearNum() {
+            document.getElementById('num-input').value = "";
+        }
+
+        // 手動輸入時的安全限制
+        function validateInput(element) {
+            let value = parseInt(element.value);
+            if (value > 100) {
+                element.value = 100;
+            }
+        }
+
+function generateItems() {
+    initAudio();
+    const input = document.getElementById('num-input');
+    let count = parseInt(input.value) || 1;
+    if (count > 100) count = 100;
+    if (count < 1) count = 1;
+    input.value = count;
+
+    const emoji = document.getElementById('type-select').value;
+    const grid = document.getElementById('items-grid');
+    const bigNumber = document.getElementById('big-number');
+
+    bigNumber.innerText = count;
+    grid.innerHTML = '';
+
+    const rect = grid.getBoundingClientRect();
+    const stageWidth = Math.max(280, rect.width || window.innerWidth - 40);
+    const stageHeight = Math.max(320, rect.height || window.innerHeight - 180);
+
+    let bestCols = 10;
+    let itemSize = 48;
+
+    if (count < 10) {
+        // ==================== 小數量：大力放大 ====================
+        let maxScore = 0;
+        for (let cols = 1; cols <= count; cols++) {
+            let rows = Math.ceil(count / cols);
+            let sizeW = (stageWidth - (cols - 1) * 12) / cols;
+            let sizeH = (stageHeight - (rows - 1) * 12) / rows;
+            let size = Math.min(sizeW, sizeH);
+            if (size > maxScore) {
+                maxScore = size;
+                bestCols = cols;
+            }
+        }
+        
+        // 關鍵：給小數量更高的上限，讓 1 個圖示可以很大
+        if (count === 1) {
+            itemSize = Math.min(maxScore, Math.min(stageWidth * 0.75, stageHeight * 0.75));
+        } else if (count <= 4) {
+            itemSize = Math.min(maxScore, 180);
+        } else if (count <= 9) {
+            itemSize = Math.min(maxScore, 120);
+        } else {
+            itemSize = Math.min(maxScore, 95);
+        }
+
+    } else {
+        // ==================== 大數量（10以上）：維持 10 欄 ====================
+        bestCols = 10;
+        const availableWidth = stageWidth - (bestCols - 1) * 8;
+        itemSize = Math.floor(availableWidth / bestCols);
+        itemSize = Math.min(itemSize, 68);   // 可調整此數值
+        itemSize = Math.max(itemSize, 34);
+    }
+
+    const finalFontSize = Math.floor(itemSize * 0.78);
+
+    grid.style.gridTemplateColumns = `repeat(${bestCols}, 1fr)`;
+    grid.style.gridTemplateRows = 'none';
+    grid.style.autoRows = 'min-content';
+
+    let clickCounter = 0;
+
+    for (let i = 1; i <= count; i++) {
+        const item = document.createElement('div');
+        item.className = 'item';
+        
+        item.style.fontSize = `${finalFontSize}px`;
+        item.style.width = '100%';
+        item.style.aspectRatio = '1 / 1';
+        item.style.maxWidth = `${itemSize}px`;
+        item.style.maxHeight = `${itemSize}px`;
+        item.style.margin = '0 auto';
+        
+        item.innerText = emoji;
+        item.style.animationDelay = `${Math.min(i * 0.004, 0.28)}s`;
+
+        const badge = document.createElement('div');
+        badge.className = 'count-badge';
+        const badgeSize = Math.max(20, finalFontSize * 0.6);
+        badge.style.width = `${badgeSize}px`;
+        badge.style.height = `${badgeSize}px`;
+        badge.style.fontSize = `${Math.floor(badgeSize * 0.55)}px`;
+        item.appendChild(badge);
+
+        const handlePointerDown = (e) => {
+            e.preventDefault();
+            if (!item.classList.contains('clicked')) {
+                clickCounter++;
+                item.classList.add('clicked');
+                badge.innerText = clickCounter;
+                playPopSound();
+            }
+        };
+
+        item.addEventListener('touchstart', handlePointerDown, { passive: false });
+        item.addEventListener('mousedown', handlePointerDown);
+
+        grid.appendChild(item);
+    }
+}
+
+        document.getElementById('start-btn').addEventListener('click', generateItems);
+        window.addEventListener('load', () => setTimeout(generateItems, 100));
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(generateItems, 150);
+        });
+    </script>
+</body>
+</html>

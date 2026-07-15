@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>中文認字遊戲 (廣東話)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", sans-serif;
+            background-color: #fff9e7;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #control-panel {
+            background-color: #ffffff;
+            padding: 10px 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+        .home-btn {
+            font-size: 1rem;
+            padding: 8px 12px;
+            background-color: #748ffc;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        select {
+            font-size: 1rem;
+            padding: 8px 12px;
+            border: 3px solid #cbd5e1;
+            border-radius: 12px;
+            background-color: white;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        #flashcard-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+        #card {
+            background: white;
+            width: 90%;
+            max-width: 320px;
+            height: 55%;
+            max-height: 400px;
+            border-radius: 32px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            padding: 20px;
+            border: 6px solid #ffd43b;
+            animation: cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+        }
+        #emoji-pic {
+            font-size: 7.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+        }
+        #word-text {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: #2c3e50;
+            letter-spacing: 1px;
+            text-align: center;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #speak-btn {
+            background-color: #ff922b;
+            border: none;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #d9480f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #speak-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #d9480f;
+        }
+        /* 進階自訂輸入區 */
+        #custom-panel {
+            background-color: #fff;
+            padding: 12px 15px;
+            border-top: 2px dashed #ffe3e3;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            z-index: 10;
+        }
+        .custom-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .input-row {
+            display: flex;
+            width: 100%;
+            max-width: 360px;
+            gap: 8px;
+        }
+        input[type="text"] {
+            flex: 1;
+            font-size: 1.1rem;
+            padding: 10px 14px;
+            border: 3px solid #ffdeeb;
+            border-radius: 16px;
+            outline: none;
+            color: #2c3e50;
+            font-weight: bold;
+            -webkit-user-select: text; /* 確保 iOS 可以點擊輸入文字 */
+            user-select: text;
+        }
+        input[type="text"]:focus {
+            border-color: #ff8787;
+        }
+        .magic-btn {
+            font-size: 1.1rem;
+            padding: 10px 16px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #dd5252;
+        }
+        .magic-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #dd5252;
+        }
+        #nav-panel {
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+        .nav-btn {
+            font-size: 1.1rem;
+            padding: 10px 24px;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+        }
+        #prev-btn { background-color: #adb5bd; box-shadow: 0 5px 0 #868e96; }
+        #prev-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #868e96; }
+        #next-btn { background-color: #ff6b6b; box-shadow: 0 5px 0 #dd5252; }
+        #next-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #dd5252; }
+
+        @keyframes cardPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="control-panel">
+        <a href="index.html" class="home-btn">🏠 返回主頁</a>
+        <select id="theme-select" onchange="changeTheme()">
+            <option value="animals">🐱 動物主題</option>
+            <option value="items">🎒 生活用品</option>
+            <option value="jobs">👨‍🍳 職業主題</option>
+        </select>
+    </div>
+
+    <div id="flashcard-area">
+        <div id="card">
+            <div id="emoji-pic">🦁</div>
+            <div id="word-text">獅子</div>
+            <button id="speak-btn">🔊</button>
+        </div>
+    </div>
+
+    <div id="nav-panel">
+        <button id="prev-btn" class="nav-btn" onclick="prevCard()">◀ 上一個</button>
+        <button id="next-btn" class="nav-btn" onclick="nextCard()">下一個 ▶</button>
+    </div>
+
+    <!-- 新增：進階自訂生成區 -->
+    <div id="custom-panel">
+        <div class="custom-title">🪄 魔法變卡機 (可按鍵盤語音說出詞語)：</div>
+        <div class="input-row">
+            <input type="text" id="custom-input" placeholder="例如：西瓜、飛機、直升機..." maxlength="8">
+            <button class="magic-btn" onclick="generateCustomCard()">變！</button>
+        </div>
+    </div>
+
+    <script>
+        const database = {
+            animals: [
+                { word: "獅子", emoji: "🦁" }, { word: "大象", emoji: "🐘" }, { word: "長頸鹿", emoji: "🦒" },
+                { word: "小狗", emoji: "🐶" }, { word: "小貓", emoji: "🐱" }, { word: "兔子", emoji: "🐰" },
+                { word: "熊貓", emoji: "🐼" }, { word: "猴子", emoji: "🐵" }
+            ],
+            items: [
+                { word: "牙刷", emoji: "🪥" }, { word: "毛巾", emoji: "🧼" }, { word: "杯子", emoji: "🥛" },
+                { word: "雨傘", emoji: "☂️" }, { word: "書包", emoji: "🎒" }, { word: "剪刀", emoji: "✂️" },
+                { word: "手錶", emoji: "⌚" }, { word: "鑰匙", emoji: "🔑" }
+            ],
+            jobs: [
+                { word: "醫生", emoji: "🧑‍⚕️" }, { word: "消防員", emoji: "👨‍🚒" }, { word: "警察", emoji: "👮" },
+                { word: "廚師", emoji: "👨‍🍳" }, { word: "老師", emoji: "🧑‍🏫" }, { word: "太空人", emoji: "👨‍🚀" },
+                { word: "畫家", emoji: "🧑‍🎨" }, { word: "農夫", emoji: "🧑‍🌾" }
+            ]
+        };
+
+        // Emoji 即時智能匹配字典 (當幼兒自行輸入時，用來即時配對圖片)
+        const emojiDictionary = {
+            "西瓜": "🍉", "草莓": "🍓", "香蕉": "🍌", "葡萄": "🍇", "橙": "🍊", "橘子": "🍊", "櫻桃": "🍒", "桃子": "🍑", "鳳梨": "🍍", "菠蘿": "🍍",
+            "飛機": "✈️", "直升機": "🚁", "火車": "🚂", "船": "🚢", "自行車": "🚲", "單車": "🚲", "摩托車": "🏍️", "火箭": "🚀", "氣球": "🎈",
+            "太陽": "☀️", "月亮": "🌙", "星星": "⭐", "彩虹": "🌈", "雲": "☁️", "雨": "🌧️", "雪人": "☃️", "花": "🌸", "樹": "🌳",
+            "魚": "🐟", "鳥": "🐦", "恐龍": "🦖", "螃蟹": "🦀", "烏龜": "🐢", "青蛙": "🐸", "蝴蝶": "🦋", "蜜蜂": "🐝",
+            "電視": "📺", "電話": "📱", "電腦": "💻", "帽子": "🧢", "衣服": "👕", "鞋子": "👟", "眼鏡": "👓", "書": "📖"
+        };
+
+        let currentTheme = 'animals';
+        let currentList = [];
+        let currentIndex = 0;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function changeTheme() {
+            currentTheme = document.getElementById('theme-select').value;
+            currentList = shuffle([...database[currentTheme]]);
+            currentIndex = 0;
+            updateCard();
+        }
+
+        function updateCard() {
+            const item = currentList[currentIndex];
+            const card = document.getElementById('card');
+            const emojiDiv = document.getElementById('emoji-pic');
+            
+            card.style.animation = 'none';
+            card.offsetHeight; 
+            card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+
+            // 重置樣式 (防止自訂卡片的純文字樣式殘留到一般卡片)
+            emojiDiv.style.backgroundColor = "transparent";
+            emojiDiv.style.color = "initial";
+            emojiDiv.style.fontSize = "7.5rem";
+
+            emojiDiv.innerText = item.emoji;
+            document.getElementById('word-text').innerText = item.word;
+            
+            speakWord();
+        }
+
+        // 新增：即時生成自訂字卡
+        function generateCustomCard() {
+            const inputField = document.getElementById('custom-input');
+            const rawText = inputField.value.trim();
+            if (!rawText) return;
+
+            // 1. 嘗試尋找對應的 Emoji
+            let foundEmoji = "";
+            
+            // 精準匹配
+            if (emojiDictionary[rawText]) {
+                foundEmoji = emojiDictionary[rawText];
+            } else {
+                // 部分模糊匹配 (例如：輸入「大紅蘋果」能匹配到「蘋果」的 Emoji)
+                for (let key in emojiDictionary) {
+                    if (rawText.includes(key) || key.includes(rawText)) {
+                        foundEmoji = emojiDictionary[key];
+                        break;
+                    }
+                }
+            }
+
+            const card = document.getElementById('card');
+            const emojiDiv = document.getElementById('emoji-pic');
+            
+            card.style.animation = 'none';
+            card.offsetHeight;
+            card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+
+            document.getElementById('word-text').innerText = rawText;
+
+            if (foundEmoji) {
+                // 找到了 Emoji，正常顯示
+                emojiDiv.style.backgroundColor = "transparent";
+                emojiDiv.style.fontSize = "7.5rem";
+                emojiDiv.innerText = foundEmoji;
+                // 將這張新字卡悄悄塞進當前的循環列表，讓上下頁可以切換回來
+                currentList.splice(currentIndex + 1, 0, { word: rawText, emoji: foundEmoji });
+                currentIndex++;
+            } else {
+                // 找不到 Emoji，自動生成彩色首字文字章 (Text Icon)
+                const colors = ["#ff6b6b", "#4dadf7", "#51cf66", "#fcc419", "#cc5de8", "#ff922b"];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                emojiDiv.innerText = rawText.charAt(0); // 取第一個字
+                emojiDiv.style.backgroundColor = randomColor;
+                emojiDiv.style.color = "white";
+                emojiDiv.style.fontSize = "4.5rem";
+                emojiDiv.style.fontWeight = "900";
+
+                currentList.splice(currentIndex + 1, 0, { word: rawText, emoji: rawText.charAt(0), isCustomText: true, bgColor: randomColor });
+                currentIndex++;
+            }
+
+            inputField.value = ""; // 清空輸入欄
+            inputField.blur(); // 收起鍵盤
+            
+            speakWord();
+        }
+
+        function nextCard() {
+            if (currentIndex < currentList.length - 1) {
+                currentIndex++;
+                const item = currentList[currentIndex];
+                const card = document.getElementById('card');
+                const emojiDiv = document.getElementById('emoji-pic');
+                
+                card.style.animation = 'none';
+                card.offsetHeight;
+                card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+
+                document.getElementById('word-text').innerText = item.word;
+
+                if (item.isCustomText) {
+                    emojiDiv.innerText = item.emoji;
+                    emojiDiv.style.backgroundColor = item.bgColor;
+                    emojiDiv.style.color = "white";
+                    emojiDiv.style.fontSize = "4.5rem";
+                    emojiDiv.style.fontWeight = "900";
+                } else {
+                    emojiDiv.style.backgroundColor = "transparent";
+                    emojiDiv.style.color = "initial";
+                    emojiDiv.style.fontSize = "7.5rem";
+                    emojiDiv.innerText = item.emoji;
+                }
+                speakWord();
+            } else {
+                currentList = shuffle([...database[currentTheme]]);
+                currentIndex = 0;
+                updateCard();
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                const item = currentList[currentIndex];
+                const card = document.getElementById('card');
+                const emojiDiv = document.getElementById('emoji-pic');
+                
+                card.style.animation = 'none';
+                card.offsetHeight;
+                card.style.animation = 'cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards';
+
+                document.getElementById('word-text').innerText = item.word;
+
+                if (item.isCustomText) {
+                    emojiDiv.innerText = item.emoji;
+                    emojiDiv.style.backgroundColor = item.bgColor;
+                    emojiDiv.style.color = "white";
+                    emojiDiv.style.fontSize = "4.5rem";
+                    emojiDiv.style.fontWeight = "900";
+                } else {
+                    emojiDiv.style.backgroundColor = "transparent";
+                    emojiDiv.style.color = "initial";
+                    emojiDiv.style.fontSize = "7.5rem";
+                    emojiDiv.innerText = item.emoji;
+                }
+                speakWord();
+            }
+        }
+
+        function speakWord() {
+            const text = document.getElementById('word-text').innerText;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
+            const cantoneseVoice = voices.find(v => v.lang.includes('HK') || v.lang.includes('yue') || v.lang.includes('zh-HK'));
+            if (cantoneseVoice) utterance.voice = cantoneseVoice;
+            utterance.rate = 0.85;
+            utterance.pitch = 1.1;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        document.getElementById('speak-btn').addEventListener('click', speakWord);
+        document.getElementById('speak-btn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            speakWord();
+        });
+
+        // 支援按 Enter 鍵直接變魔術
+        document.getElementById('custom-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') generateCustomCard();
+        });
+
+        window.onload = () => {
+            changeTheme();
+        };
+    </script>
+</body>
+</html>
