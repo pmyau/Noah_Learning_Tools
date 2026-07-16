@@ -23,7 +23,8 @@
         }
         #control-panel {
             background-color: #ffffff;
-            padding: 12px;
+            padding: 10px 16px;
+            min-height: 96px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             display: flex;
             align-items: center;
@@ -109,22 +110,22 @@
             flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 30px;
             overflow-x: hidden; /* 🌟 嚴格禁止左右水平滾動 */
             overflow-y: hidden;
         }
         
-        /* 大數字：黑色且高對比度 */
+        /* 大數字：黑色且高對比度，置於上方輸入欄左側 */
         #big-number {
-            font-size: 8rem;
+            font-size: 3.2rem;
             font-weight: 900;
             color: rgba(0, 0, 0, 0.85);
             pointer-events: none;
             z-index: 1;
             flex-shrink: 0;
-            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
-            padding-left: 25px; /* 防止緊貼左側邊界 */
+            line-height: 1;
+            text-shadow: 1px 1px 0px rgba(255,255,255,0.8);
             text-align: center;
+            min-width: 2ch; /* 避免數字位數變化時跳動 */
         }
         
         /* 圖示網格空間 */
@@ -137,27 +138,9 @@
             align-content: center;
             z-index: 2;
             
-            /* 滾動與溢出設定 */
-            overflow-x: hidden;          /* 🌟 嚴格禁止水平滾動（防止左右穿幫） */
-            overflow-y: auto;            /* 🌟 垂直方向超出時（如 90、100 個），允許上下滑動 */
-            max-height: 100%;            /* 限制最大高度不超出舞台 */
-            padding-right: 4px;          /* 給滾動條留點空隙 */
-            padding-bottom: 30px;        /* 增加底部安全內邊距，防止最後一排滑到底時被截斷 */
-            
-            /* 美化滾動條 */
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 transparent;
-        }
-        
-        #items-grid::-webkit-scrollbar {
-            width: 6px;
-        }
-        #items-grid::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        #items-grid::-webkit-scrollbar-thumb {
-            background-color: #cbd5e1;
-            border-radius: 10px;
+            /* 不使用捲軸：所有圖示必須完整顯示在同一頁內 */
+            overflow: hidden;
+            max-height: 100%;
         }
         
         .item {
@@ -200,16 +183,11 @@
 
         /* 行動裝置直式螢幕優化 */
         @media (max-width: 600px) {
-            #game-stage {
-                flex-direction: column;
-                gap: 15px;
+            #control-panel {
+                min-height: 80px;
             }
             #big-number {
-                font-size: 5rem;
-                padding-left: 0;       /* 直向時不需要左側間距 */
-                padding-top: 10px;     /* 改為預留上方安全間距 */
-                text-align: center;
-                width: 100%;
+                font-size: 2.2rem;
             }
         }
 
@@ -243,6 +221,8 @@
         <button class="num-pad-btn" onclick="pressNum(0)">0</button>
         <button class="num-pad-btn clear-btn" onclick="clearNum()"> 清 除 </button>
 
+        <div id="big-number">48</div>
+
         <label for="num-input">數字：</label>
         <input type="number" id="num-input" min="1" max="100" value="48" oninput="validateInput(this)">
         
@@ -263,7 +243,6 @@
     </div>
 
     <div id="game-stage">
-        <div id="big-number">48</div>
         <div id="items-grid"></div>
     </div>
 
@@ -355,22 +334,24 @@ function generateItems() {
         
         // 關鍵：給小數量更高的上限，讓 1 個圖示可以很大
         if (count === 1) {
-            itemSize = Math.min(maxScore, Math.min(stageWidth * 0.75, stageHeight * 0.75));
+            itemSize = Math.min(maxScore, Math.min(stageWidth * 0.8, stageHeight * 0.8));
         } else if (count <= 4) {
-            itemSize = Math.min(maxScore, 180);
+            itemSize = Math.min(maxScore, 220);
         } else if (count <= 9) {
-            itemSize = Math.min(maxScore, 120);
+            itemSize = Math.min(maxScore, 150);
         } else {
-            itemSize = Math.min(maxScore, 95);
+            itemSize = Math.min(maxScore, 115);
         }
 
     } else {
-        // ==================== 大數量（10以上）：維持 10 欄 ====================
+        // ==================== 大數量（10以上）：維持 10 欄，且需完整塞入一頁（無捲軸） ====================
         bestCols = 10;
+        const rows = Math.ceil(count / bestCols);
         const availableWidth = stageWidth - (bestCols - 1) * 8;
-        itemSize = Math.floor(availableWidth / bestCols);
-        itemSize = Math.min(itemSize, 68);   // 可調整此數值
-        itemSize = Math.max(itemSize, 34);
+        const availableHeight = stageHeight - (rows - 1) * 8;
+        itemSize = Math.floor(Math.min(availableWidth / bestCols, availableHeight / rows));
+        itemSize = Math.min(itemSize, 86);   // 可調整此數值（原本移除大數字後空間變大，放大上限）
+        itemSize = Math.max(itemSize, 20);   // 最小值僅作安全防呆，避免過度縮小到看不見
     }
 
     const finalFontSize = Math.floor(itemSize * 0.78);
